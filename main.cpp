@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <string>
+#include <chrono>
 
 using namespace std;
 
@@ -12,6 +13,37 @@ std::ostream& operator<<(std::ostream& out, const Yamr& yamr) {
         out << p.first << " " << p.second << std::endl;
     }
     return out;
+}
+
+chrono::high_resolution_clock::time_point StartTimer(const std::string& msg) {
+    cout << msg << endl;
+    return chrono::high_resolution_clock::now();
+}
+
+void EndTimer(const std::string& msg, chrono::high_resolution_clock::time_point start) {
+    const auto end = chrono::high_resolution_clock::now();
+    double dur = chrono::duration_cast<chrono::seconds>(end - start).count();
+    std::cout << msg << endl << "Duration: " << dur << "s" << endl;
+}
+
+void testWordsCountSingleThread() {
+    cout << "Start test word counter in single thread" << endl;
+
+    auto text = FileReader::Read("data/words_count_text.txt");
+    Yamr yamr = YamrConverter::ConvertToDummy(text);
+    
+    WordsCounterMapper mapper;
+    WordsCounterReducer reducer;
+
+    MapReduce mapReduce;
+
+    auto start = StartTimer("Start single thread word counting");
+    auto result = mapReduce(yamr, mapper, reducer);
+    EndTimer("End single thread word counting", start);
+
+    FileWriter::Write("data/words_count_result_single_thread.txt", result);
+
+    cout << "End test word counter in single thread" << endl << endl;
 }
 
 void testWordsCount() {
@@ -28,7 +60,9 @@ void testWordsCount() {
 
     MapReduce mapReduce;
 
+    auto start = StartTimer("Start multi thread word counting");
     auto result = mapReduce(yamr, mapper, reducer);
+    EndTimer("End multi thread word counting", start);
 
     FileWriter::Write("data/words_count_result.txt", result);
 
@@ -46,7 +80,9 @@ void testSort() {
 
     MapReduce mapReduce;
 
+    auto start = StartTimer("Start sort");
     auto result = mapReduce(yamr, mapper, reducer);
+    EndTimer("End sort", start);
 
     FileWriter::Write("data/sorted_data.txt", result);  
 
@@ -54,8 +90,26 @@ void testSort() {
 }
 
 int main(int argc, const char * argv[]) {
-    testWordsCount();
-    testSort();
+    cout << "For test sort enter 1" << endl
+              << "For test multithread word counter enter 2" << endl
+              << "For test one thred word counter enter 3" << endl;
+
+    int mode;
+    cin >> mode;
+
+    switch (mode) {
+        case 1:
+            testSort();
+            break;
+        case 2:
+            testWordsCount();
+            break;
+        case 3:
+            testWordsCountSingleThread();
+            break;
+        default:
+            throw runtime_error("Incorrect mode");
+    }
     
     return 0;
 }

@@ -12,7 +12,7 @@ map_reduce.o: src/map_reduce.cpp
 iface.o: src/iface.cpp
 	g++ -c src/iface.cpp
 
-word_counter.o: src/examples/word_counter.cpp
+word_counter.o: examples/word_counter.cpp
 	g++ -c examples/word_counter.cpp
 
 utils.o: src/utils.cpp
